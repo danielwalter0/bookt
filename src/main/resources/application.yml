@@ -1,7 +1,11 @@
 spring:
   application:
     name: bookt
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bookt?options=-c%20timezone=UTC
   jpa:
+    properties:
+      hibernate.jdbc.time_zone: UTC
     hibernate:
       ddl-auto: validate
     open-in-view: false
