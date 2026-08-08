@@ -20,7 +20,7 @@ public class BookingService {
 
     public Booking createBooking(CreateBookingRequest request) {
         Resource resource = resourceRepository.findById(request.resourceId())
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         Tenant tenant = resource.getTenant();
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "CONFIRMED", null);
         try{
