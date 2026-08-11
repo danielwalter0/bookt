@@ -1,7 +1,9 @@
 package dev.bookt.common;
 
 import dev.bookt.booking.BookingConflictException;
-import dev.bookt.booking.ResourceNotFoundException;
+import dev.bookt.booking.BookingNotFoundException;
+import dev.bookt.booking.InvalidHoldStateException;
+import dev.bookt.resource.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,6 +17,20 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
     public ErrorResponse handleBookingConflict(BookingConflictException e){
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(value = InvalidHoldStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public ErrorResponse handleInvalidHoldState(InvalidHoldStateException e){
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(value = BookingNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public ErrorResponse handleBookingNotFound(BookingNotFoundException e){
         return new ErrorResponse(e.getMessage());
     }
 
@@ -32,6 +48,8 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
         return new ErrorResponse("An unexpected error occurred while processing the request");
     }
+
+
 
 
 
