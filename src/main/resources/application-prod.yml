@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://ep-delicate-haze-b2r6xlyx.c-6.eu-central-1.aws.neon.tech/neondb?sslmode=require&options=-c%20timezone=UTC
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
