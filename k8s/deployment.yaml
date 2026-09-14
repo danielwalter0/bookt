@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookt-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookt
+  template:
+    metadata:
+      labels:
+        app: bookt
+    spec:
+      containers:
+        - name: bookt
+          image: europe-west2-docker.pkg.dev/bookt-deployment/bookt-repo/bookt:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bookt-db-secret
+                  key: DB_URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: bookt-db-secret
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bookt-db-secret
+                  key: DB_PASSWORD
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
