@@ -26,6 +26,8 @@ The centerpiece of this project is a concurrency stress test: hundreds of thread
 | CI | GitHub Actions |
 | Production DB | Neon (managed Postgres) |
 | Hosting | Render |
+| Container Orchestration | Kubernetes (GKE Autopilot) |
+| Container Registry | Google Artifact Registry |
 
 ## Architecture
 
@@ -78,6 +80,25 @@ Activate the production profile with:
 SPRING_PROFILES_ACTIVE=prod
 ```
 
+## Deployment
+
+Bookt runs in production on Render, connected to a Neon-managed Postgres instance.
+
+The app is also deployable to Google Kubernetes Engine, using GKE Autopilot so node management is handled by GCP rather than manually provisioned. The Docker image is built and pushed to Google Artifact Registry, then deployed via the manifests in `k8s/`:
+
+- `k8s/deployment.yaml` — defines the pod spec, resource requests/limits, and environment configuration (database credentials pulled from a Kubernetes Secret rather than hardcoded)
+- `k8s/service.yaml` — exposes the deployment through a GCP-provisioned LoadBalancer with a stable external IP
+
+```bash
+# Build and push the image
+docker build -t europe-west2-docker.pkg.dev/bookt-deployment/bookt-repo/bookt:latest .
+docker push europe-west2-docker.pkg.dev/bookt-deployment/bookt-repo/bookt:latest
+
+# Deploy
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
 ## Project Status
 
 - ✅ Core domain model and booking lifecycle
@@ -85,6 +106,7 @@ SPRING_PROFILES_ACTIVE=prod
 - ✅ Idempotency key support
 - ✅ CI pipeline (GitHub Actions)
 - ✅ Dockerized deployment to Render (live, connected to Neon)
+- ✅ Kubernetes manifests for GKE deployment (Autopilot, Artifact Registry)
 - ⬜ Concurrency stress test suite (centerpiece test)
 - ⬜ Authentication (JWT)
 - ⬜ Frontend + embeddable booking widget
