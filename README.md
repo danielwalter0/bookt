@@ -20,6 +20,7 @@ The centerpiece of this project is a concurrency stress test: hundreds of thread
 | Framework | Spring Boot 3.5.x |
 | Database | PostgreSQL 16 |
 | Migrations | Flyway (`ddl-auto: validate`) |
+| Query Builder | jOOQ (type-safe SQL for queries JPA doesn't express well) |
 | Testing | JUnit 5, Testcontainers (no H2 — integration tests run against real Postgres) |
 | Build | Maven |
 | Containerization | Docker |
@@ -34,6 +35,7 @@ The centerpiece of this project is a concurrency stress test: hundreds of thread
 - **Entities:** `Tenant`, `Resource`, `Booking`, modeled with proper JPA relationships (`@ManyToOne` associations rather than raw foreign-key UUIDs).
 - **Booking lifecycle:** a hold-then-confirm-then-expire flow. A booking is placed on hold, confirmed within a window, and automatically expired by a scheduled job (`HoldExpirationJob`) if not confirmed in time.
 - **Conflict prevention:** an exclusion constraint on the `time_range` column (a Postgres `GENERATED ALWAYS` range column, intentionally excluded from the JPA entity) guarantees no two bookings for the same resource can overlap, enforced at the database level.
+- **Availability pre-check:** a jOOQ query checks for overlapping bookings using Postgres's native `&&` range operator, the same operator the exclusion constraint itself relies on, giving callers a clean rejection before attempting a write. JPA handles this poorly since it isn't built for range-overlap queries, jOOQ is used here specifically, not throughout the codebase, since standard CRUD stays on JPA.
 - **Idempotency:** write endpoints support idempotency keys so retried requests (e.g. from flaky clients) don't create duplicate bookings.
 - **Error handling:** centralized via `GlobalExceptionHandler`, translating domain exceptions (`BookingConflictException`, `ResourceNotFoundException`) into clean HTTP responses.
 
@@ -103,6 +105,7 @@ kubectl apply -f k8s/service.yaml
 
 - ✅ Core domain model and booking lifecycle
 - ✅ GiST exclusion constraint for conflict-free concurrent booking
+- ✅ jOOQ availability pre-check using native Postgres range overlap
 - ✅ Idempotency key support
 - ✅ CI pipeline (GitHub Actions)
 - ✅ Dockerized deployment to Render (live, connected to Neon)
