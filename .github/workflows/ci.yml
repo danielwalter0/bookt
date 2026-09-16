@@ -9,6 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: bookt
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v7
       - name: Set up JDK 21
@@ -17,5 +31,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+      - name: Run Flyway migrations
+        run: mvn org.flywaydb:flyway-maven-plugin:12.4.0:migrate -Dflyway.url=jdbc:postgresql://localhost:5432/bookt -Dflyway.user=myuser -Dflyway.password=secret
       - name: Build with Maven
         run: mvn package
