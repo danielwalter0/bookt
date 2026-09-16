@@ -10,7 +10,7 @@ Bookt takes a different approach: it pushes the conflict check down into the dat
 
 ## Key Technical Feature
 
-The centerpiece of this project is a concurrency stress test: hundreds of threads fire booking requests at the *same* resource and time slot simultaneously. The test asserts that **exactly one** request succeeds and every other request receives a clean `409 Conflict` — with no locks, no retries, and no race condition handling in application code.
+The centerpiece of this project is a concurrency stress test: 500 threads fire booking requests at the *same* resource and time slot simultaneously, released together through a CountDownLatch start gate to maximize real contention. The test asserts that **exactly one** request succeeds and every other request receives a clean `BookingConflictException`, with no locks, no retries, and no race condition handling in application code, the GiST exclusion constraint alone decides the outcome under genuine concurrent load.
 
 ## Tech Stack
 
@@ -110,7 +110,7 @@ kubectl apply -f k8s/service.yaml
 - ✅ CI pipeline (GitHub Actions)
 - ✅ Dockerized deployment to Render (live, connected to Neon)
 - ✅ Kubernetes manifests for GKE deployment (Autopilot, Artifact Registry)
-- ⬜ Concurrency stress test suite (centerpiece test)
+- ✅ Concurrency stress test suite (centerpiece test)
 - ⬜ Authentication (JWT)
 - ⬜ Frontend + embeddable booking widget
 - ⬜ Multi-tenant SaaS features (tenant registration, public booking links)
@@ -119,7 +119,7 @@ kubectl apply -f k8s/service.yaml
 
 This project is being built incrementally as a portfolio piece. Planned next steps:
 
-1. Concurrency stress test proving the exclusion-constraint guarantee under load
+1. Redis-backed rate limiting on the confirm endpoint (atomic increment with TTL, capped requests per actor)
 2. JWT-based authentication
 3. Frontend client and embeddable JS widget for cross-origin booking
 4. Multi-tenant SaaS expansion (tenant onboarding, resource management UI, public booking links)
