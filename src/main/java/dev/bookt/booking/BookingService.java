@@ -14,17 +14,22 @@ import java.util.UUID;
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
+    private final BookingAvailabilityQuery availabilityQuery;
 
     // Constructor injection — Spring automatically supplies real instances
     // of both repositories when it creates this service bean.
-    public BookingService(BookingRepository bookingRepository, ResourceRepository resourceRepository) {
+    public BookingService(BookingRepository bookingRepository, ResourceRepository resourceRepository, BookingAvailabilityQuery availabilityQuery) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
+        this.availabilityQuery = availabilityQuery;
     }
 
     public Booking createBooking(CreateBookingRequest request) {
         Resource resource = resourceRepository.findById(request.resourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+        if (availabilityQuery.hasConflict(request.resourceId(), request.startsAt(), request.endsAt())) {
+            throw new BookingConflictException("Resource was already booked for the requested time");
+        }
         Tenant tenant = resource.getTenant();
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "CONFIRMED", null);
         try{
@@ -39,6 +44,9 @@ public class BookingService {
     public Booking createHold(CreateBookingRequest request) {
         Resource resource = resourceRepository.findById(request.resourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+        if (availabilityQuery.hasConflict(request.resourceId(), request.startsAt(), request.endsAt())) {
+            throw new BookingConflictException("Resource was already booked for the requested time");
+        }
         Tenant tenant = resource.getTenant();
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "HELD", OffsetDateTime.now().plusMinutes(10));
         try{
