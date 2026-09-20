@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -21,8 +22,20 @@ public class IdempotencyFilter extends OncePerRequestFilter {
         this.idempotencyKeyRepository = idempotencyKeyRepository;
     }
 
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    private boolean isIdempotencyProtectedPath(String path) {
+        return pathMatcher.match("/bookings/hold", path)
+                || pathMatcher.match("/bookings/*/confirm", path);
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (!isIdempotencyProtectedPath(request.getRequestURI())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, 4096);
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 

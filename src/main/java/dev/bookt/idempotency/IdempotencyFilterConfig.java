@@ -11,7 +11,7 @@ public class IdempotencyFilterConfig {
     public FilterRegistrationBean<IdempotencyFilter> idempotencyFilter(IdempotencyKeyRepository idempotencyKeyRepository) {
         FilterRegistrationBean<IdempotencyFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new IdempotencyFilter(idempotencyKeyRepository));
-        registrationBean.addUrlPatterns("/bookings", "/bookings/hold", "/bookings/*/confirm");
+        registrationBean.addUrlPatterns("/*");
         return registrationBean;
     }
 }
