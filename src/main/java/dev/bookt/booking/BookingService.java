@@ -4,6 +4,7 @@ import dev.bookt.resource.Resource;
 import dev.bookt.resource.ResourceNotFoundException;
 import dev.bookt.resource.ResourceRepository;
 import dev.bookt.tenant.Tenant;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +35,7 @@ public class BookingService {
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "CONFIRMED", null);
         try{
             bookingRepository.save(booking);
-        } catch (DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException | CannotAcquireLockException e){
             throw new BookingConflictException("Resource was already booked for the requested time", e);
         }
 
@@ -51,7 +52,7 @@ public class BookingService {
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "HELD", OffsetDateTime.now().plusMinutes(10));
         try{
             bookingRepository.save(booking);
-        } catch (DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException | CannotAcquireLockException e){
             throw new BookingConflictException("Resource was already booked for the requested time", e);
         }
         return booking;
