@@ -17,7 +17,7 @@ The centerpiece of this project is a concurrency stress test: 500 threads fire b
 | Layer | Technology |
 |---|---|
 | Language | Java 21 |
-| Framework | Spring Boot 3.5.x |
+| Framework | Spring Boot 4.1.0 |
 | Database | PostgreSQL 16 |
 | Migrations | Flyway (`ddl-auto: validate`) |
 | Query Builder | jOOQ (type-safe SQL for queries JPA doesn't express well) |
