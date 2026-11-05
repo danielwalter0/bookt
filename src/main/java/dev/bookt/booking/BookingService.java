@@ -7,6 +7,7 @@ import dev.bookt.tenant.Tenant;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -25,8 +26,9 @@ public class BookingService {
         this.availabilityQuery = availabilityQuery;
     }
 
+    @Transactional
     public Booking createBooking(CreateBookingRequest request) {
-        Resource resource = resourceRepository.findById(request.resourceId())
+        Resource resource = resourceRepository.findByIdForUpdate(request.resourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         if (availabilityQuery.hasConflict(request.resourceId(), request.startsAt(), request.endsAt())) {
             throw new BookingConflictException("Resource was already booked for the requested time");
@@ -34,7 +36,7 @@ public class BookingService {
         Tenant tenant = resource.getTenant();
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "CONFIRMED", null);
         try{
-            bookingRepository.save(booking);
+            bookingRepository.saveAndFlush(booking);
         } catch (DataIntegrityViolationException | CannotAcquireLockException e){
             throw new BookingConflictException("Resource was already booked for the requested time", e);
         }
@@ -42,8 +44,9 @@ public class BookingService {
         return booking;
     }
 
+    @Transactional
     public Booking createHold(CreateBookingRequest request) {
-        Resource resource = resourceRepository.findById(request.resourceId())
+        Resource resource = resourceRepository.findByIdForUpdate(request.resourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         if (availabilityQuery.hasConflict(request.resourceId(), request.startsAt(), request.endsAt())) {
             throw new BookingConflictException("Resource was already booked for the requested time");
@@ -51,7 +54,7 @@ public class BookingService {
         Tenant tenant = resource.getTenant();
         Booking booking = new Booking(tenant, resource, request.userId(), request.startsAt(), request.endsAt(), "HELD", OffsetDateTime.now().plusMinutes(10));
         try{
-            bookingRepository.save(booking);
+            bookingRepository.saveAndFlush(booking);
         } catch (DataIntegrityViolationException | CannotAcquireLockException e){
             throw new BookingConflictException("Resource was already booked for the requested time", e);
         }
